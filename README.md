@@ -1,0 +1,1 @@
+# elmish-firebase-research
