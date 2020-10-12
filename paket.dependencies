@@ -1,0 +1,14 @@
+source https://api.nuget.org/v3/index.json
+
+storage: none
+framework: netstandard2.1
+
+nuget Fable.Core
+nuget Fable.Elmish
+nuget Fable.Elmish.Browser
+nuget Fable.Elmish.Debugger
+nuget Fable.Elmish.HMR
+nuget Fable.Elmish.React
+nuget Feliz
+nuget Feliz.Router
+nuget Fulma
