@@ -8,7 +8,7 @@ const Config = {
     fsEntry: "./src/SampleApp/SampleApp.fsproj",
     outputDir: "./dist",
     assetsDir: "./public",
-    devServerPort: 8888,
+    devServerPort: 8000,
     babelOptions: {}
 }
 

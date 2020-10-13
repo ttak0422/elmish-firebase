@@ -2,6 +2,7 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
+    "firebase": "^7.23.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1"
   },
