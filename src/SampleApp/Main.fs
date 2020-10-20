@@ -1,15 +1,9 @@
 ﻿module SampleApp
 
-open System
 open Elmish
-open Fable.Core
-open Fable.Core.JS
-open Fable.Core.JsInterop
+open Elmish.React
 open Feliz
-
-[<RequireQualifiedAccessAttribute>]
-module Sub =
-    let batch (subs: Sub<'msg> list): Cmd<'msg> = subs
+open Elf.Porter
 
 type Model = { PushText: string; IsSignedIn: bool }
 
@@ -19,45 +13,20 @@ type Msg =
     | Read of string
     | SignedIn of bool
 
-module Port =
-    module Internal =
-        type CallJsFromFs =
-            abstract signIn: unit -> unit
-            abstract push: string -> unit
+[<Porter("./main.js")>]
+let signIn: unit -> unit = jsPorter
 
-        [<ImportAll("./main.js")>]
-        let callJsFromFs: CallJsFromFs = jsNative
+[<Porter("./main.js")>]
+let push: string -> unit = jsPorter
 
-        let readEvent = Event<string>()
-        let signedInEvent = Event<bool>()
-        let readObserver = readEvent.Publish
-        let signedInObserver = signedInEvent.Publish
-
-    let signIn = Internal.callJsFromFs.signIn
-
-    let push = Internal.callJsFromFs.push
-
-    let readSub (toMsg: string -> Msg): Sub<Msg> =
-        fun (dispatch: Dispatch<Msg>) ->
-            Internal.readObserver
-            |> Observable.subscribe (toMsg >> dispatch)
-            |> ignore
-
-    let signedInSub (toMsg: bool -> Msg): Sub<Msg> =
-        fun (dispatch: Dispatch<Msg>) ->
-            Internal.signedInObserver
-            |> Observable.subscribe (toMsg >> dispatch)
-            |> ignore
-
-let read = Port.Internal.readEvent.Trigger
-let signedIn = Port.Internal.signedInEvent.Trigger
-
+let read, readSub = Porter.create Read
+let signedIn, signedInSub = Porter.create SignedIn
 
 let view (model: Model) (dispatch: Dispatch<Msg>) =
     Html.div [ if model.IsSignedIn then
                    Html.input [ prop.type' "input"
                                 prop.value model.PushText
-                                prop.onInput (fun e -> !!e.target?value |> Push |> dispatch) ]
+                                prop.onChange (Push >> dispatch) ]
                else
                    Html.button [ prop.onClick (fun _ -> dispatch SignIn)
                                  prop.text "Google SignIn" ] ]
@@ -68,11 +37,9 @@ let init () =
 let update (msg: Msg) (model: Model): Model * Msg Cmd =
     match msg with
     | SignIn ->
-        Port.signIn ()
-        model, []
+        model, Cmd.port signIn ()
     | Push text ->
-        Port.push (text)
-        model, []
+        model, Cmd.port push text
     | Read text ->
         let model' = { model with PushText = text }
         model', Cmd.none
@@ -81,10 +48,8 @@ let update (msg: Msg) (model: Model): Model * Msg Cmd =
         model', Cmd.none
 
 let subscriptions (model: Model) =
-    Sub.batch [ Port.readSub Read
-                Port.signedInSub SignedIn ]
-
-open Elmish.HMR
+    [ readSub
+      signedInSub ]
 
 Program.mkProgram init update view
 |> Program.withSubscription subscriptions
